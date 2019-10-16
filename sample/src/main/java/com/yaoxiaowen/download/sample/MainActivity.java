@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -17,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.yaoxiaowen.download.DownloadConstant;
+import com.yaoxiaowen.download.DownloadListener;
 import com.yaoxiaowen.download.DownloadStatus;
 import com.yaoxiaowen.download.FileInfo;
 import com.yaoxiaowen.download.DownloadHelper;
@@ -27,14 +29,14 @@ import com.yaoxiaowen.download.utils.LogUtils;
 import java.io.File;
 
 /**
- * @author   www.yaoxiaowen.com
+ * @author www.yaoxiaowen.com
  * time:  2017/12/20 20:23
  * @since 1.0.0
  */
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
-    
-    public static final String TAG = "weny SimpleMainActivity";
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static final String TAG = "weny SimpleMainActivity";
+    private Handler mainHandler;
     //Todo 同程旅游的下载地址 ：     "http://s.ly.com/tTV79";
     //为什么下载不下来，这个 网页做了什么, 回头要研究
 
@@ -42,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String firstUrl = Constanst.WAN_DOU_JIA_URL;
     private File firstFile;
     private String firstName = Constanst.WAN_DOU_JIA_NAME;
-    private static final String FIRST_ACTION = "download_helper_first_action";
+//    private static final String FIRST_ACTION = "download_helper_first_action";
 
 
     //美团 app 下载地址
@@ -86,17 +88,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button deleteAllBtn;
     private Button jumpTestActyBtn;
 
-
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (null != intent){
-                switch (intent.getAction()){
-                    case FIRST_ACTION: {
-                        FileInfo firstFileInfo = (FileInfo) intent.getSerializableExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD);
-                        updateTextview(firstTitle, firstProgressBar, firstFileInfo, firstName, firstBtn);
-                    }
-                    break;
+            if (null != intent) {
+                switch (intent.getAction()) {
+//                    case FIRST_ACTION: {
+//                        FileInfo firstFileInfo = (FileInfo) intent.getSerializableExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD);
+//                        updateTextview(firstTitle, firstProgressBar, firstFileInfo, firstName, firstBtn);
+//                    }
+//                    break;
                     case SECOND_ACTION: {
                         FileInfo secondFileInfo = (FileInfo) intent.getSerializableExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD);
                         updateTextview(secondTitle, secondProgressBar, secondFileInfo, secondName, secondBtn);
@@ -121,12 +122,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         LogUtils.setDebug(true);
 
+        mainHandler = new Handler(getMainLooper());
+
         initData();
         initView();
         initListener();
     }
 
-    private void initData(){
+    private void initData() {
         firstFile = new File(getDir(), firstName);
         secondFile = new File(getDir(), secondName);
         thirdFile = new File(getDir(), thirdName);
@@ -134,14 +137,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDownloadHelper = DownloadHelper.getInstance();
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(FIRST_ACTION);
+//        filter.addAction(FIRST_ACTION);
         filter.addAction(SECOND_ACTION);
         filter.addAction(THIRD_ACTION);
 
         registerReceiver(receiver, filter);
     }
 
-    private void initView(){
+    private void initView() {
         firstTitle = (TextView) findViewById(R.id.firstTitle);
         firstProgressBar = (ProgressBar) findViewById(R.id.firstProgressBar);
         firstBtn = (Button) findViewById(R.id.firstBtn);
@@ -159,10 +162,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         deleteAllBtn = (Button) findViewById(R.id.deleteAllBtn);
 
-        jumpTestActyBtn = (Button)findViewById(R.id.jumpTestActyBtn);
+        jumpTestActyBtn = (Button) findViewById(R.id.jumpTestActyBtn);
     }
 
-    private void initListener(){
+    private void initListener() {
         firstBtn.setOnClickListener(this);
         secondBtn.setOnClickListener(this);
         thirdBtn.setOnClickListener(this);
@@ -173,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
+        switch (view.getId()) {
             case R.id.firstBtn:
                 onFirstApkClick();
                 break;
@@ -194,53 +197,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-
-    private File getDir(){
-        if (dir!=null && dir.exists()){
+    private File getDir() {
+        if (dir != null && dir.exists()) {
             return dir;
         }
 
         dir = new File(getExternalCacheDir(), "download");
-        if (!dir.exists()){
+        if (!dir.exists()) {
             dir.mkdirs();
         }
         return dir;
     }
 
-    private void onFirstApkClick(){
+    private void onFirstApkClick() {
         String firstContent = firstBtn.getText().toString().trim();
-        if (TextUtils.equals(firstContent, START)){
-            mDownloadHelper.addTask(firstUrl, firstFile, FIRST_ACTION).submit(MainActivity.this);
+        if (TextUtils.equals(firstContent, START)) {
+            mDownloadHelper.addTask(thirdUrl, thirdFile, new ThirdDownloadListener());
+            mDownloadHelper.addTask(firstUrl, firstFile, new FirstDownloadListener()).submit2(MainActivity.this);
             firstBtn.setText(PAUST);
             firstBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
 
-        }else {
-            mDownloadHelper.pauseTask(firstUrl, firstFile, FIRST_ACTION).submit(MainActivity.this);
+        } else {
+            mDownloadHelper.pauseTask(firstUrl, firstFile).submit2(MainActivity.this);
             firstBtn.setText(START);
             firstBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
     }
 
-    private void onSecondApkClick(){
+    private void onSecondApkClick() {
         String secondContent = secondBtn.getText().toString().trim();
-        if (TextUtils.equals(secondContent, START)){
+        if (TextUtils.equals(secondContent, START)) {
             mDownloadHelper.addTask(secondUrl, secondFile, SECOND_ACTION).submit(MainActivity.this);
             secondBtn.setText(PAUST);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
-        }else {
+        } else {
             mDownloadHelper.pauseTask(secondUrl, secondFile, SECOND_ACTION).submit(MainActivity.this);
             secondBtn.setText(START);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
     }
 
-    private void onThirdApkClick(){
+    private void onThirdApkClick() {
         String thirdContent = thirdBtn.getText().toString().trim();
-        if (TextUtils.equals(thirdContent, START)){
+        if (TextUtils.equals(thirdContent, START)) {
             mDownloadHelper.addTask(thirdUrl, thirdFile, THIRD_ACTION).submit(MainActivity.this);
             thirdBtn.setText(PAUST);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
-        }else {
+        } else {
             mDownloadHelper.pauseTask(thirdUrl, thirdFile, THIRD_ACTION).submit(MainActivity.this);
             thirdBtn.setText(START);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_blue);
@@ -255,16 +258,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void updateTextview(TextView textView, ProgressBar progressBar,  FileInfo fileInfo, String fileName, Button btn){
-        float pro = (float) (fileInfo.getDownloadLocation()*1.0/ fileInfo.getSize());
-        int progress = (int)(pro*100);
+    private void updateTextview(TextView textView, ProgressBar progressBar, FileInfo fileInfo, String fileName, Button btn) {
+        float pro = (float) (fileInfo.getDownloadLocation() * 1.0 / fileInfo.getSize());
+        int progress = (int) (pro * 100);
         float downSize = fileInfo.getDownloadLocation() / 1024.0f / 1024;
-        float totalSize = fileInfo.getSize()  / 1024.0f / 1024;
-
-//        StringBuilder sb = new StringBuilder();
-        ////        sb.append(fileName  + "\t  ( " + progress + "% )" + "\n");
-//        sb.append("状态: " + DebugUtils.getStatusDesc(fileInfo.getDownloadStatus()) + " \t ");
-//        sb.append(Utils_Parse.getTwoDecimalsStr(downSize) + "M/" + Utils_Parse.getTwoDecimalsStr(totalSize) + "M\n");
+        float totalSize = fileInfo.getSize() / 1024.0f / 1024;
 
         // 我们将字体颜色设置的好看一些而已
         int count = 0;
@@ -287,29 +285,131 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sb.setSpan(new ForegroundColorSpan(textColorRandarRed), count, sb.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 
 
-
         textView.setText(sb);
 
 
         progressBar.setProgress(progress);
 
-        if (fileInfo.getDownloadStatus() == DownloadStatus.COMPLETE){
+        if (fileInfo.getDownloadStatus() == DownloadStatus.COMPLETE) {
             btn.setText("下载完成");
             btn.setBackgroundColor(0xff5c0d);
         }
     }
 
-    private void deleteAllFile(){
-       if (firstFile!=null && firstFile.exists()){
-           firstFile.delete();
-       }
+    private void deleteAllFile() {
+        if (firstFile != null && firstFile.exists()) {
+            firstFile.delete();
+        }
 
-       if (secondFile!=null && secondFile.exists()){
-           secondFile.delete();
-       }
+        if (secondFile != null && secondFile.exists()) {
+            secondFile.delete();
+        }
 
-       if (thirdFile!=null && thirdFile.exists()){
-           thirdFile.delete();
-       }
+        if (thirdFile != null && thirdFile.exists()) {
+            thirdFile.delete();
+        }
+    }
+
+
+    class FirstDownloadListener implements DownloadListener {
+
+
+        @Override
+        public void onPepare() {
+            firstTitle.setText("准备下载");
+        }
+
+        @Override
+        public void onLoading(final FileInfo fileInfo) {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateTextview(firstTitle, firstProgressBar, fileInfo, firstName, firstBtn);
+                }
+            });
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstTitle.setText("pause");
+                    firstTitle.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onComplete() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstBtn.setText("下载完成");
+                    firstBtn.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onCanceled() {
+
+        }
+    }
+
+    class ThirdDownloadListener implements DownloadListener {
+
+
+        @Override
+        public void onPepare() {
+            firstTitle.setText("准备下载");
+        }
+
+        @Override
+        public void onLoading(final FileInfo fileInfo) {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateTextview(thirdTitle, thirdProgressBar, fileInfo, thirdName, thirdBtn);
+                }
+            });
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    thirdTitle.setText("pause");
+                    thirdTitle.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onComplete() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    thirdBtn.setText("下载完成");
+                    thirdBtn.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onCanceled() {
+
+        }
     }
 }

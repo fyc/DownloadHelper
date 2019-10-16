@@ -21,6 +21,12 @@ public class DownloadInfo implements Serializable{
         this.action = action;
     }
 
+    public DownloadInfo(String url, File file) {
+        this.url = url;
+        this.file = file;
+        this.action = action;
+    }
+
     public String getUrl() {
         return url;
     }

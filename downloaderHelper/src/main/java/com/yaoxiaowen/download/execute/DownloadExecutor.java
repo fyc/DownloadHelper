@@ -30,10 +30,11 @@ public class DownloadExecutor extends ThreadPoolExecutor{
         if (status== DownloadStatus.PAUSE || status== DownloadStatus.FAIL){
             task.setFileStatus(DownloadStatus.WAIT);
 
-            Intent intent = new Intent();
-            intent.setAction(task.getDownLoadInfo().getAction());
-            intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, task.getFileInfo());
-            task.sendBroadcast(intent);
+//            Intent intent = new Intent();
+//            intent.setAction(task.getDownLoadInfo().getAction());
+//            intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, task.getFileInfo());
+//            task.sendBroadcast(intent);
+            task.getDownloadListener().onPepare();
 
             execute(task);
         }else {

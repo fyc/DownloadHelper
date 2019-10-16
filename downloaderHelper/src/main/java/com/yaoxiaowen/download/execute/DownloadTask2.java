@@ -6,10 +6,9 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.yaoxiaowen.download.DownloadConstant;
-import com.yaoxiaowen.download.DownloadListener;
 import com.yaoxiaowen.download.DownloadStatus;
-import com.yaoxiaowen.download.bean.DownloadInfo;
 import com.yaoxiaowen.download.FileInfo;
+import com.yaoxiaowen.download.bean.DownloadInfo;
 import com.yaoxiaowen.download.db.DbHolder;
 import com.yaoxiaowen.download.utils.LogUtils;
 
@@ -20,13 +19,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * @author www.yaoxiaowen.com
- * time:  2017/12/19 19:12
+ * @author   www.yaoxiaowen.com
+ * time:  2017/12/19 19:12  
  * @since 1.0.0
- * <p>
+ *
  * Todo 这个地方可以改用 FutureTask来做
  */
-public class DownloadTask implements Runnable {
+public class DownloadTask2 implements Runnable{
 
     public static final String TAG = "DownloadTask";
 
@@ -35,9 +34,8 @@ public class DownloadTask implements Runnable {
     private FileInfo mFileInfo;
     private DbHolder dbHolder;
     private boolean isPause;
-    private DownloadListener downloadListener;
 
-    public DownloadTask(Context context, DownloadInfo info, DbHolder dbHolder) {
+    public DownloadTask2(Context context, DownloadInfo info, DbHolder dbHolder) {
         this.context = context;
         this.info = info;
         this.dbHolder = dbHolder;
@@ -53,17 +51,17 @@ public class DownloadTask implements Runnable {
         FileInfo fileInfoFromDb = dbHolder.getFileInfo(info.getUniqueId());
         long location = 0;
         long fileSize = 0;
-        if (null != fileInfoFromDb) {
+        if (null != fileInfoFromDb){
             location = fileInfoFromDb.getDownloadLocation();
             fileSize = fileInfoFromDb.getSize();
 
-            if (location == 0) {
-                if (info.getFile().exists()) {
+            if (location == 0){
+                if (info.getFile().exists()){
                     info.getFile().delete();
                 }
-            } else {
+            }else {
                 //因为未知的原因, 这个文件不存在了,(虽然数据库记录表明我们的确已经下载过了),所以我们要从头开始
-                if (!info.getFile().exists()) {
+                if (!info.getFile().exists()){
                     LogUtils.i(TAG, "file = " + info.getFile());
                     Log.i(TAG, "数据库记录表明我们下载过该文件, 但是现在该文件不存在,所以从头开始");
                     dbHolder.deleteFileInfo(info.getUniqueId());
@@ -71,8 +69,8 @@ public class DownloadTask implements Runnable {
                     fileSize = 0;
                 }
             }
-        } else {
-            if (info.getFile().exists()) {
+        }else {
+            if (info.getFile().exists()){
                 info.getFile().delete();
             }
         }
@@ -83,56 +81,46 @@ public class DownloadTask implements Runnable {
         LogUtils.i(TAG, "构造函数() -> 初始化完毕  mFileInfo=" + mFileInfo);
     }
 
-    public DownloadTask(Context context, DownloadInfo info, DbHolder dbHolder, DownloadListener downloadListener) {
-        this(context, info, dbHolder);
-        this.downloadListener = downloadListener;
-    }
-
     @Override
     public void run() {
         download();
     }
 
-    public void pause() {
+    public void pause(){
         isPause = true;
     }
 
-    public int getStatus() {
-        if (null != mFileInfo) {
+    public int getStatus(){
+        if (null != mFileInfo){
             return mFileInfo.getDownloadStatus();
         }
         return DownloadStatus.FAIL;
     }
 
-    public void setFileStatus(int status) {
+    public void setFileStatus(int status){
         mFileInfo.setDownloadStatus(status);
     }
 
-    public void sendBroadcast(Intent intent) {
+    public void sendBroadcast(Intent intent){
         context.sendBroadcast(intent);
     }
 
-    public DownloadInfo getDownLoadInfo() {
+    public DownloadInfo getDownLoadInfo(){
         return info;
     }
 
-    public DownloadListener getDownloadListener() {
-        return downloadListener;
-    }
-
-    public FileInfo getFileInfo() {
+    public FileInfo getFileInfo(){
         return mFileInfo;
     }
 
-    private void download() {
+    private void download(){
         mFileInfo.setDownloadStatus(DownloadStatus.PREPARE);
         LogUtils.i(TAG, "准备开始下载");
 
-//        Intent intent = new Intent();
-//        intent.setAction(info.getAction());
-//        intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, mFileInfo);
-//        context.sendBroadcast(intent);
-        downloadListener.onPepare();
+        Intent intent = new Intent();
+        intent.setAction(info.getAction());
+        intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, mFileInfo);
+        context.sendBroadcast(intent);
 
         RandomAccessFile accessFile = null;
         HttpURLConnection http = null;
@@ -143,15 +131,15 @@ public class DownloadTask implements Runnable {
 
             String realUrl = getRedirectionUrl(info.getUrl());
             URL sizeUrl = new URL(realUrl);
-            HttpURLConnection sizeHttp = (HttpURLConnection) sizeUrl.openConnection();
+            HttpURLConnection sizeHttp = (HttpURLConnection)sizeUrl.openConnection();
             sizeHttp.setRequestMethod("GET");
             sizeHttp.connect();
 
             long totalSize = sizeHttp.getContentLength();
             sizeHttp.disconnect();
 
-            if (totalSize <= 0) {
-                if (info.getFile().exists()) {
+            if (totalSize <= 0){
+                if (info.getFile().exists()){
                     info.getFile().delete();
                 }
                 dbHolder.deleteFileInfo(info.getUniqueId());
@@ -163,7 +151,7 @@ public class DownloadTask implements Runnable {
             accessFile = new RandomAccessFile(info.getFile(), "rwd");
 
             URL url = new URL(realUrl);
-            http = (HttpURLConnection) url.openConnection();
+            http = (HttpURLConnection)url.openConnection();
             http.setConnectTimeout(10000);
             http.setRequestProperty("Connection", "Keep-Alive");
             http.setReadTimeout(10000);
@@ -171,72 +159,67 @@ public class DownloadTask implements Runnable {
             http.connect();
 
             inStream = http.getInputStream();
-            byte[] buffer = new byte[1024 * 8];
+            byte[] buffer = new byte[1024*8];
             int offset;
 
             accessFile.seek(mFileInfo.getDownloadLocation());
-            long millis = SystemClock.uptimeMillis();
-            while ((offset = inStream.read(buffer)) != -1) {
-                if (isPause) {
+            long  millis = SystemClock.uptimeMillis();
+            while ((offset = inStream.read(buffer)) != -1){
+                if (isPause){
                     LogUtils.i(TAG, "下载过程 设置了 暂停");
                     mFileInfo.setDownloadStatus(DownloadStatus.PAUSE);
                     isPause = false;
                     dbHolder.saveFile(mFileInfo);
-
-                    downloadListener.onPaused();
-//                    context.sendBroadcast(intent);
+                    context.sendBroadcast(intent);
 
                     http.disconnect();
                     accessFile.close();
                     inStream.close();
                     return;
                 }
-                accessFile.write(buffer, 0, offset);
-                mFileInfo.setDownloadLocation(mFileInfo.getDownloadLocation() + offset);
+                accessFile.write(buffer,0, offset);
+                mFileInfo.setDownloadLocation( mFileInfo.getDownloadLocation()+offset );
                 mFileInfo.setDownloadStatus(DownloadStatus.LOADING);
 
-                if (SystemClock.uptimeMillis() - millis >= 1000) {
+                if (SystemClock.uptimeMillis()-millis >= 1000){
                     millis = SystemClock.uptimeMillis();
                     dbHolder.saveFile(mFileInfo);
-//                    context.sendBroadcast(intent);
-                    downloadListener.onLoading(mFileInfo);
+                    context.sendBroadcast(intent);
                 }
             }// end of "while(..."
 
             mFileInfo.setDownloadStatus(DownloadStatus.COMPLETE);
             dbHolder.saveFile(mFileInfo);
-//            context.sendBroadcast(intent);
-            downloadListener.onLoading(mFileInfo);
-            downloadListener.onComplete();
-        } catch (Exception e) {
+            context.sendBroadcast(intent);
+        } catch (Exception e){
             LogUtils.e(TAG, "下载过程发生失败");
             mFileInfo.setDownloadStatus(DownloadStatus.FAIL);
             dbHolder.saveFile(mFileInfo);
-//            context.sendBroadcast(intent);
-            downloadListener.onFailed();
+            context.sendBroadcast(intent);
             e.printStackTrace();
         } finally {
             try {
-                if (accessFile != null) {
+                if (accessFile != null){
                     accessFile.close();
                 }
-                if (inStream != null) {
+                if (inStream != null){
                     inStream.close();
                 }
-                if (http != null) {
+                if (http != null){
                     http.disconnect();
                 }
-            } catch (IOException e) {
+            }catch (IOException e){
                 LogUtils.e(TAG, "finally 块  关闭文件过程中 发生异常");
                 e.printStackTrace();
             }
         }
 
 
+
     }//end of "download()"
 
 
-    private String getRedirectionUrl(String sourceUrl) {
+    private String getRedirectionUrl(String sourceUrl){
 
         String redirUrl = sourceUrl;
 
@@ -247,14 +230,14 @@ public class DownloadTask implements Runnable {
 
             conn.connect();
             int responseCode = conn.getResponseCode();
-            if (responseCode == 302) {
+            if (responseCode == 302){
                 redirUrl = conn.getHeaderField("Location");
                 LogUtils.i(TAG, " 下载地址重定向为 = " + redirUrl);
 
             }
             conn.disconnect();
 
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
 
