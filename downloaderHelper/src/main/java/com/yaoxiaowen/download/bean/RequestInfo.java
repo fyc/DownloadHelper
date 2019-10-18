@@ -1,8 +1,6 @@
 package com.yaoxiaowen.download.bean;
 
 
-
-import com.yaoxiaowen.download.config.InnerConstant;
 import com.yaoxiaowen.download.utils.DebugUtils;
 
 import java.io.Serializable;
@@ -16,12 +14,12 @@ public class RequestInfo implements Serializable{
 
     private int dictate;   //下载的控制状态
 
+    private CharSequence contentTitle,contentText;
+
     private DownloadInfo downloadInfo;
 
     public RequestInfo() {
     }
-
-
 
     public int getDictate() {
         return dictate;
@@ -29,6 +27,22 @@ public class RequestInfo implements Serializable{
 
     public void setDictate(int dictate) {
         this.dictate = dictate;
+    }
+
+    public CharSequence getContentTitle() {
+        return contentTitle;
+    }
+
+    public void setContentTitle(CharSequence contentTitle) {
+        this.contentTitle = contentTitle;
+    }
+
+    public CharSequence getContentText() {
+        return contentText;
+    }
+
+    public void setContentText(CharSequence contentText) {
+        this.contentText = contentText;
     }
 
     public DownloadInfo getDownloadInfo() {

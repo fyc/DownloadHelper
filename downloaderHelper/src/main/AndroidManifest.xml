@@ -10,7 +10,12 @@
 
         <!-- 注册service -->
         <service android:name="com.yaoxiaowen.download.service.DownloadService" />
-
+        <receiver android:name="com.yaoxiaowen.download.NotificationBroadcastReceiver">
+            <intent-filter>
+                <action android:name="com.xxx.xxx.click"/>
+                <action android:name="com.xxx.xxx.cancel"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

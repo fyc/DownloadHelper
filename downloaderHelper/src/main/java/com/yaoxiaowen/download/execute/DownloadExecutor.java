@@ -1,9 +1,6 @@
 package com.yaoxiaowen.download.execute;
 
 
-import android.content.Intent;
-
-import com.yaoxiaowen.download.DownloadConstant;
 import com.yaoxiaowen.download.DownloadStatus;
 import com.yaoxiaowen.download.utils.LogUtils;
 
@@ -29,13 +26,8 @@ public class DownloadExecutor extends ThreadPoolExecutor{
         int status = task.getStatus();
         if (status== DownloadStatus.PAUSE || status== DownloadStatus.FAIL){
             task.setFileStatus(DownloadStatus.WAIT);
-
-//            Intent intent = new Intent();
-//            intent.setAction(task.getDownLoadInfo().getAction());
-//            intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, task.getFileInfo());
-//            task.sendBroadcast(intent);
-            task.getDownloadListener().onPepare();
-
+            task.getDownloadListener().onWait();
+            task.getNotifyDownloadListener().onWait();
             execute(task);
         }else {
             LogUtils.w(TAG, "文件状态不正确, 不进行下载 FileInfo=" + task.getFileInfo());

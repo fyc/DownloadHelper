@@ -3,6 +3,9 @@ package com.yaoxiaowen.download;
 public interface DownloadListener {
 
     void onPepare();
+
+    void onWait();
+
     //下载进度显示
     void onLoading(FileInfo fileInfo);
 

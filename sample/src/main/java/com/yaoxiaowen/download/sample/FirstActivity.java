@@ -29,7 +29,7 @@ import java.io.File;
  * time:  2017/12/20 20:23
  * @since 1.0.0
  */
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class FirstActivity extends AppCompatActivity implements View.OnClickListener {
 
     public static final String TAG = "weny SimpleMainActivity";
     private Handler mainHandler;
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView firstTitle;
     private ProgressBar firstProgressBar;
-    private Button firstBtn, firstCancleBtn, firstChangeForegroundBtn;
+    private Button firstBtn;
 
     private TextView secondTitle;
     private ProgressBar secondProgressBar;
@@ -79,11 +79,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button deleteAllBtn;
     private Button jumpTestActyBtn;
+    private Button jumpMainActyBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_first);
 
         LogUtils.setDebug(true);
 
@@ -106,8 +107,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         firstTitle = (TextView) findViewById(R.id.firstTitle);
         firstProgressBar = (ProgressBar) findViewById(R.id.firstProgressBar);
         firstBtn = (Button) findViewById(R.id.firstBtn);
-        firstCancleBtn = (Button) findViewById(R.id.firstCancleBtn);
-        firstChangeForegroundBtn = (Button) findViewById(R.id.firstChangeForegroundBtn);
         firstBtn.setText(START);
 
         secondTitle = (TextView) findViewById(R.id.secondTitle);
@@ -123,17 +122,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         deleteAllBtn = (Button) findViewById(R.id.deleteAllBtn);
 
         jumpTestActyBtn = (Button) findViewById(R.id.jumpTestActyBtn);
+        jumpMainActyBtn= (Button) findViewById(R.id.jumpMainActyBtn);
     }
 
     private void initListener() {
         firstBtn.setOnClickListener(this);
-        firstCancleBtn.setOnClickListener(this);
-        firstChangeForegroundBtn.setOnClickListener(this);
         secondBtn.setOnClickListener(this);
         thirdBtn.setOnClickListener(this);
 
         deleteAllBtn.setOnClickListener(this);
         jumpTestActyBtn.setOnClickListener(this);
+        jumpMainActyBtn.setOnClickListener(this);
     }
 
     @Override
@@ -141,13 +140,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()) {
             case R.id.firstBtn:
                 onFirstApkClick();
-                break;
-            case R.id.firstCancleBtn:
-//                onFirstApkClick();
-                break;
-            case R.id.firstChangeForegroundBtn:
-//                onFirstApkClick();
-                mDownloadHelper.addTask(firstUrl, firstFile, firstName, "", new FirstDownloadListener()).submitForeground(MainActivity.this);
                 break;
             case R.id.secondBtn:
                 onSecondApkClick();
@@ -161,6 +153,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.jumpTestActyBtn:
                 Intent intent = new Intent(this, TestActivity.class);
                 startActivity(intent);
+                break;
+            case R.id.jumpMainActyBtn:
+                Intent intent1 = new Intent(this, MainActivity.class);
+                startActivity(intent1);
                 break;
         }
     }
@@ -181,12 +177,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void onFirstApkClick() {
         String firstContent = firstBtn.getText().toString().trim();
         if (TextUtils.equals(firstContent, START)) {
-            mDownloadHelper.addTask(firstUrl, firstFile, new FirstDownloadListener()).submit(MainActivity.this);
+//            mDownloadHelper.addTask(thirdUrl, thirdFile, new ThirdDownloadListener());
+            mDownloadHelper.addTask(firstUrl, firstFile, new FirstDownloadListener()).submit(FirstActivity.this);
             firstBtn.setText(PAUST);
             firstBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
 
         } else {
-            mDownloadHelper.pauseTask(firstUrl, firstFile).submit(MainActivity.this);
+            mDownloadHelper.pauseTask(firstUrl, firstFile).submit(FirstActivity.this);
             firstBtn.setText(START);
             firstBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
@@ -195,11 +192,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void onSecondApkClick() {
         String secondContent = secondBtn.getText().toString().trim();
         if (TextUtils.equals(secondContent, START)) {
-            mDownloadHelper.addTask(secondUrl, secondFile, new FirstDownloadListener()).submit(MainActivity.this);
+            mDownloadHelper.addTask(secondUrl, secondFile, new FirstDownloadListener()).submit(FirstActivity.this);
             secondBtn.setText(PAUST);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
-            mDownloadHelper.pauseTask(secondUrl, secondFile).submit(MainActivity.this);
+            mDownloadHelper.pauseTask(secondUrl, secondFile).submit(FirstActivity.this);
             secondBtn.setText(START);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
@@ -208,11 +205,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void onThirdApkClick() {
         String thirdContent = thirdBtn.getText().toString().trim();
         if (TextUtils.equals(thirdContent, START)) {
-            mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "", new ThirdDownloadListener()).submitForeground(MainActivity.this);
+            mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "", new ThirdDownloadListener()).submitForeground(FirstActivity.this);
             thirdBtn.setText(PAUST);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
-            mDownloadHelper.pauseTask(thirdUrl, thirdFile).submitForeground(MainActivity.this);
+            mDownloadHelper.pauseTask(thirdUrl, thirdFile).submitForeground(FirstActivity.this);
             thirdBtn.setText(START);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
@@ -223,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         //解绑
-        mDownloadHelper.unbindService(MainActivity.this);
+        mDownloadHelper.unbindService(FirstActivity.this);
         super.onDestroy();
     }
 

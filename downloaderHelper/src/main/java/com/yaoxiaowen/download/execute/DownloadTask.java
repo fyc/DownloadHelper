@@ -36,6 +36,7 @@ public class DownloadTask implements Runnable {
     private DbHolder dbHolder;
     private boolean isPause;
     private DownloadListener downloadListener;
+    private DownloadListener notifyDownloadListener;
 
     public DownloadTask(Context context, DownloadInfo info, DbHolder dbHolder) {
         this.context = context;
@@ -83,9 +84,18 @@ public class DownloadTask implements Runnable {
         LogUtils.i(TAG, "构造函数() -> 初始化完毕  mFileInfo=" + mFileInfo);
     }
 
-    public DownloadTask(Context context, DownloadInfo info, DbHolder dbHolder, DownloadListener downloadListener) {
+    public DownloadTask(Context context, DownloadInfo info, DbHolder dbHolder, DownloadListener downloadListener, DownloadListener notifyDownloadListener) {
         this(context, info, dbHolder);
-        this.downloadListener = downloadListener;
+        if (null == downloadListener) {
+            this.downloadListener = new DefaultListenner();
+        } else {
+            this.downloadListener = downloadListener;
+        }
+        if (null == notifyDownloadListener) {
+            this.notifyDownloadListener = new DefaultListenner();
+        } else {
+            this.notifyDownloadListener = notifyDownloadListener;
+        }
     }
 
     @Override
@@ -108,16 +118,24 @@ public class DownloadTask implements Runnable {
         mFileInfo.setDownloadStatus(status);
     }
 
-    public void sendBroadcast(Intent intent) {
-        context.sendBroadcast(intent);
-    }
-
     public DownloadInfo getDownLoadInfo() {
         return info;
     }
 
     public DownloadListener getDownloadListener() {
         return downloadListener;
+    }
+
+    public DownloadListener getNotifyDownloadListener() {
+        return notifyDownloadListener;
+    }
+
+    public void setDownloadListener(DownloadListener downloadListener) {
+        this.downloadListener = downloadListener;
+    }
+
+    public void setNotifyDownloadListener(DownloadListener notifyDownloadListener) {
+        this.notifyDownloadListener = notifyDownloadListener;
     }
 
     public FileInfo getFileInfo() {
@@ -127,20 +145,13 @@ public class DownloadTask implements Runnable {
     private void download() {
         mFileInfo.setDownloadStatus(DownloadStatus.PREPARE);
         LogUtils.i(TAG, "准备开始下载");
-
-//        Intent intent = new Intent();
-//        intent.setAction(info.getAction());
-//        intent.putExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD, mFileInfo);
-//        context.sendBroadcast(intent);
         downloadListener.onPepare();
-
+        notifyDownloadListener.onPepare();
         RandomAccessFile accessFile = null;
         HttpURLConnection http = null;
         InputStream inStream = null;
 
         try {
-
-
             String realUrl = getRedirectionUrl(info.getUrl());
             URL sizeUrl = new URL(realUrl);
             HttpURLConnection sizeHttp = (HttpURLConnection) sizeUrl.openConnection();
@@ -184,7 +195,7 @@ public class DownloadTask implements Runnable {
                     dbHolder.saveFile(mFileInfo);
 
                     downloadListener.onPaused();
-//                    context.sendBroadcast(intent);
+                    notifyDownloadListener.onPaused();
 
                     http.disconnect();
                     accessFile.close();
@@ -198,22 +209,23 @@ public class DownloadTask implements Runnable {
                 if (SystemClock.uptimeMillis() - millis >= 1000) {
                     millis = SystemClock.uptimeMillis();
                     dbHolder.saveFile(mFileInfo);
-//                    context.sendBroadcast(intent);
                     downloadListener.onLoading(mFileInfo);
+                    notifyDownloadListener.onLoading(mFileInfo);
                 }
             }// end of "while(..."
 
             mFileInfo.setDownloadStatus(DownloadStatus.COMPLETE);
             dbHolder.saveFile(mFileInfo);
-//            context.sendBroadcast(intent);
             downloadListener.onLoading(mFileInfo);
+            notifyDownloadListener.onLoading(mFileInfo);
             downloadListener.onComplete();
+            notifyDownloadListener.onComplete();
         } catch (Exception e) {
             LogUtils.e(TAG, "下载过程发生失败");
             mFileInfo.setDownloadStatus(DownloadStatus.FAIL);
             dbHolder.saveFile(mFileInfo);
-//            context.sendBroadcast(intent);
             downloadListener.onFailed();
+            notifyDownloadListener.onFailed();
             e.printStackTrace();
         } finally {
             try {
@@ -259,5 +271,43 @@ public class DownloadTask implements Runnable {
         }
 
         return redirUrl;
+    }
+
+    class DefaultListenner implements DownloadListener {
+
+        @Override
+        public void onPepare() {
+
+        }
+
+        @Override
+        public void onWait() {
+
+        }
+
+        @Override
+        public void onLoading(FileInfo fileInfo) {
+
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+
+        }
+
+        @Override
+        public void onComplete() {
+
+        }
+
+        @Override
+        public void onCanceled() {
+
+        }
     }
 }

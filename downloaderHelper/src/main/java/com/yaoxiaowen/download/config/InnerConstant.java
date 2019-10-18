@@ -30,7 +30,4 @@ public class InnerConstant {
     public static class Inner{
         public static final String SERVICE_INTENT_EXTRA = "service_intent_extra";
     }
-
-    //用于intent数据的传递
-//    public static final String EXTRA_INTENT_DOWNLOAD = "yaoxiaowen_download_extra";
 }

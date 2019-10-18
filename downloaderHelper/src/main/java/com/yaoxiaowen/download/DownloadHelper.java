@@ -32,6 +32,7 @@ public class DownloadHelper {
     private HashMap<String, DownloadListener> downListeners = new HashMap<>();
 
     private DownloadService.DownloadBinder mDownloadBinder;
+
     private ServiceConnection connection = new ServiceConnection() {
 
         /**
@@ -41,6 +42,11 @@ public class DownloadHelper {
          */
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            mDownloadBinder.stop();
+            //解绑
+            mDownloadBinder = null;
+            requests.clear();
+            downListeners.clear();
         }
 
         /**
@@ -51,8 +57,9 @@ public class DownloadHelper {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mDownloadBinder = (DownloadService.DownloadBinder) service;
-            mDownloadBinder.startDownload(requests, downListeners);
+            mDownloadBinder.startRequest(requests, downListeners);
             requests.clear();
+            downListeners.clear();
         }
     };
 
@@ -80,48 +87,55 @@ public class DownloadHelper {
             LogUtils.w("没有下载任务可供执行");
             return;
         }
-        Intent intent = new Intent(context, DownloadService.class);
-        intent.putExtra(InnerConstant.Inner.SERVICE_INTENT_EXTRA, requests);
-        context.startService(intent);
-        requests.clear();
+
+        if (null != mDownloadBinder) {
+            mDownloadBinder.startRequest(requests, downListeners);
+            requests.clear();
+            downListeners.clear();
+        } else {
+        //绑定
+        Intent bindIntent = new Intent(context, DownloadService.class);
+        context.bindService(bindIntent, connection, context.BIND_AUTO_CREATE);
+        }
+
     }// end of "submit(..."
 
-    public synchronized void submit2(Context context) {
+    /**
+     * 提交  下载/暂停  等任务.(提交就意味着开始执行生效)
+     *
+     * @param context
+     */
+    public synchronized void submitForeground(Context context) {
         if (requests.isEmpty()) {
             LogUtils.w("没有下载任务可供执行");
             return;
         }
-
-        if (null != mDownloadBinder) {
-            mDownloadBinder.startDownload(requests, downListeners);
-            requests.clear();
-        } else {
-            //绑定
-            Intent bindIntent = new Intent(context, DownloadService.class);
-            context.bindService(bindIntent, connection, context.BIND_AUTO_CREATE);
-        }
-
-//        requests.clear();
+        Intent intent = new Intent(context, DownloadService.class);
+        intent.putExtra(InnerConstant.Inner.SERVICE_INTENT_EXTRA, requests);
+        context.startService(intent);
+        requests.clear();
+        downListeners.clear();
     }// end of "submit(..."
 
     /**
      * 添加 新的下载任务
      *
-     * @param url    下载的url
-     * @param file   存储在某个位置上的文件
-     * @param action 下载过程会发出广播信息.该参数是广播的action
+     * @param url              下载的url
+     * @param file             存储在某个位置上的文件
+     * @param downloadListener 下载过程的监听接口
      * @return DownloadHelper自身 (方便链式调用)
      */
-    public DownloadHelper addTask(String url, File file, String action) {
-        RequestInfo requestInfo = createRequest(url, file, action, InnerConstant.Request.loading);
+    public DownloadHelper addTask(String url, File file, DownloadListener downloadListener) {
+        RequestInfo requestInfo = createRequest(url, file, InnerConstant.Request.loading);
+        downListeners.put(requestInfo.getDownloadInfo().getUniqueId(), downloadListener);
         LogUtils.i(TAG, "addTask() requestInfo=" + requestInfo);
 
         requests.add(requestInfo);
         return this;
     }
 
-    public DownloadHelper addTask(String url, File file, DownloadListener downloadListener) {
-        RequestInfo requestInfo = createRequest(url, file, InnerConstant.Request.loading);
+    public DownloadHelper addTask(String url, File file, CharSequence contentTitle, CharSequence contentText, DownloadListener downloadListener) {
+        RequestInfo requestInfo = createRequest(url, file, contentTitle, contentText, InnerConstant.Request.loading);
         downListeners.put(requestInfo.getDownloadInfo().getUniqueId(), downloadListener);
         LogUtils.i(TAG, "addTask() requestInfo=" + requestInfo);
 
@@ -132,18 +146,10 @@ public class DownloadHelper {
     /**
      * 暂停某个下载任务
      *
-     * @param url    下载的url
-     * @param file   存储在某个位置上的文件
-     * @param action 下载过程会发出广播信息.该参数是广播的action
+     * @param url  下载的url
+     * @param file 存储在某个位置上的文件
      * @return DownloadHelper自身 (方便链式调用)
      */
-    public DownloadHelper pauseTask(String url, File file, String action) {
-        RequestInfo requestInfo = createRequest(url, file, action, InnerConstant.Request.pause);
-        LogUtils.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);
-        requests.add(requestInfo);
-        return this;
-    }
-
     public DownloadHelper pauseTask(String url, File file) {
         RequestInfo requestInfo = createRequest(url, file, InnerConstant.Request.pause);
         LogUtils.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);
@@ -151,22 +157,13 @@ public class DownloadHelper {
         return this;
     }
 
-    /**
-     * 设定该模块是否输出 debug信息
-     * Todo 要重构log模块, 对于我们的静态内部类，目前还不生效
-     */
-    private DownloadHelper setDebug(boolean isDebug) {
-        LogUtils.setDebug(isDebug);
+    public DownloadHelper pauseTask(String url, File file, CharSequence contentTitle, CharSequence contentText) {
+        RequestInfo requestInfo = createRequest(url, file, contentTitle, contentText, InnerConstant.Request.pause);
+        LogUtils.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);
+        requests.add(requestInfo);
         return this;
     }
 
-
-    private RequestInfo createRequest(String url, File file, String action, int dictate) {
-        RequestInfo request = new RequestInfo();
-        request.setDictate(dictate);
-        request.setDownloadInfo(new DownloadInfo(url, file, action));
-        return request;
-    }
 
     private RequestInfo createRequest(String url, File file, int dictate) {
         RequestInfo request = new RequestInfo();
@@ -175,4 +172,21 @@ public class DownloadHelper {
         return request;
     }
 
+    private RequestInfo createRequest(String url, File file, CharSequence contentTitle, CharSequence contentText, int dictate) {
+        RequestInfo request = createRequest(url, file, dictate);
+        request.setContentTitle(contentTitle);
+        request.setContentText(contentText);
+        return request;
+    }
+
+    public synchronized void unbindService(Context context) {
+        try {
+            //解绑 防止java.lang.IllegalArgumentException: Service not registered
+            if (null == mDownloadBinder) return;
+            context.unbindService(connection);
+        } catch (Exception e) {
+
+        }
+
+    }// end of "submit(..."
 }

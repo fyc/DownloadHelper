@@ -23,12 +23,12 @@ import com.yaoxiaowen.download.utils.DebugUtils;
 import java.io.File;
 
 /**
- * @author   www.yaoxiaowen.com
+ * @author www.yaoxiaowen.com
  * time:  2017/12/20 20:23
  * @since 1.0.0
  */
 public class SimpleMainActivity extends AppCompatActivity {
-    
+
     public static final String TAG = "weny SimpleMainActivity";
 
 
@@ -54,7 +54,7 @@ public class SimpleMainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (null != intent) {
                 switch (intent.getAction()) {
-                    case BC_ACTION:{
+                    case BC_ACTION: {
                         /**
                          * 我们接收到的FileInfo对象，包含了下载文件的各种信息。
                          * 然后我们就可以做我们想做的事情了。
@@ -62,10 +62,10 @@ public class SimpleMainActivity extends AppCompatActivity {
                          */
                         FileInfo fileInfo = (FileInfo) intent.getSerializableExtra(DownloadConstant.EXTRA_INTENT_DOWNLOAD);
 
-                        float pro = (float) (fileInfo.getDownloadLocation()*1.0/ fileInfo.getSize());
-                        int progress = (int)(pro*100);
+                        float pro = (float) (fileInfo.getDownloadLocation() * 1.0 / fileInfo.getSize());
+                        int progress = (int) (pro * 100);
                         float downSize = fileInfo.getDownloadLocation() / 1024.0f / 1024;
-                        float totalSize = fileInfo.getSize()  / 1024.0f / 1024;
+                        float totalSize = fileInfo.getSize() / 1024.0f / 1024;
 
                         StringBuilder sb = new StringBuilder();
                         sb.append(appName);
@@ -74,7 +74,7 @@ public class SimpleMainActivity extends AppCompatActivity {
                         textView.setText(sb.toString());
                         progressBar.setProgress(progress);
                     }
-                        break;
+                    break;
                 }
             }
         }
@@ -114,7 +114,7 @@ public class SimpleMainActivity extends AppCompatActivity {
         initListener();
     }
 
-    private void initData(){
+    private void initData() {
         mFile = new File(getDir(), appName);
 
         mDownloadHelper = DownloadHelper.getInstance();
@@ -124,7 +124,7 @@ public class SimpleMainActivity extends AppCompatActivity {
         registerReceiver(receiver, filter);
     }
 
-    private void initView(){
+    private void initView() {
         textView = (TextView) findViewById(R.id.title);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         btn = (Button) findViewById(R.id.btn);
@@ -133,16 +133,16 @@ public class SimpleMainActivity extends AppCompatActivity {
         btn.setText(START);
     }
 
-    private void initListener(){
+    private void initListener() {
 
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.i(TAG, "开始下载");
                 String content = btn.getText().toString().trim();
-                if (TextUtils.equals(content, START)){
+                if (TextUtils.equals(content, START)) {
                     downFirstApk();
-                }else if (TextUtils.equals(content, PAUST)){
+                } else if (TextUtils.equals(content, PAUST)) {
                     pauseFirstApk();
                 }
             }
@@ -152,7 +152,7 @@ public class SimpleMainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (mFile.exists()){
+                if (mFile.exists()) {
                     boolean result = mFile.delete();
                     String resultStr = result ? "成功" : "失败";
                     Utils_Toast.show(getBaseContext(), "删除 mFile  " + resultStr);
@@ -165,21 +165,21 @@ public class SimpleMainActivity extends AppCompatActivity {
     }
 
 
-    private File getDir(){
+    private File getDir() {
         File dir = new File(getExternalCacheDir(), "download");
-        if (!dir.exists()){
+        if (!dir.exists()) {
             dir.mkdirs();
         }
         return dir;
     }
 
-    private void downFirstApk(){
-        DownloadHelper.getInstance().addTask(url, mFile, BC_ACTION).submit(SimpleMainActivity.this);
+    private void downFirstApk() {
+        DownloadHelper.getInstance().addTask(url, mFile, null).submit(SimpleMainActivity.this);
 
     }
 
-    private void pauseFirstApk(){
-        DownloadHelper.getInstance().pauseTask(url, mFile, BC_ACTION).submit(SimpleMainActivity.this);
+    private void pauseFirstApk() {
+        DownloadHelper.getInstance().pauseTask(url, mFile).submit(SimpleMainActivity.this);
     }
 
 
@@ -190,11 +190,11 @@ public class SimpleMainActivity extends AppCompatActivity {
     }
 
 
-    private void updateTextview(TextView textView, ProgressBar progressBar,  FileInfo fileInfo, String fileName){
-        float pro = (float) (fileInfo.getDownloadLocation()*1.0/ fileInfo.getSize());
-        int progress = (int)(pro*100);
+    private void updateTextview(TextView textView, ProgressBar progressBar, FileInfo fileInfo, String fileName) {
+        float pro = (float) (fileInfo.getDownloadLocation() * 1.0 / fileInfo.getSize());
+        int progress = (int) (pro * 100);
         float downSize = fileInfo.getDownloadLocation() / 1024.0f / 1024;
-        float totalSize = fileInfo.getSize()  / 1024.0f / 1024;
+        float totalSize = fileInfo.getSize() / 1024.0f / 1024;
 
         StringBuilder sb = new StringBuilder();
         sb.append(fileName);
