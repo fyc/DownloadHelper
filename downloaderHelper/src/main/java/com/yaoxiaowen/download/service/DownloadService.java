@@ -60,6 +60,8 @@ public class DownloadService extends Service {
     //存储任务
     private HashMap<String, DownloadTask> mTasks = new HashMap<>();
 
+    private HashMap<String, NotificationCompat.Builder> mNotificationBuilders = new HashMap<>();
+
     private DownloadBinder mBinder = new DownloadBinder();
 
     @Override
@@ -78,66 +80,67 @@ public class DownloadService extends Service {
         if (canRequest) {
             LogUtils.i(TAG, "onStartCommand() -> 启动了service服务 intent=" + intent + "\t this=" + this);
             canRequest = false;
-
             if (null != intent && intent.hasExtra(InnerConstant.Inner.SERVICE_INTENT_EXTRA)) {
                 try {
                     ArrayList<RequestInfo> requesetes =
                             (ArrayList<RequestInfo>) intent.getSerializableExtra(InnerConstant.Inner.SERVICE_INTENT_EXTRA);
                     if (null != requesetes && requesetes.size() > 0) {
-                        for (final RequestInfo request : requesetes) {
-                            executeDownload(request, null, new DownloadListener() {
-                                @Override
-                                public void onPepare() {
-                                    if (NotificationUtils.checkNotifySetting(DownloadService.this)) {
-                                        createNotification(request);
-                                    } else {
-                                        mainHandler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(DownloadService.this, "没有通知权限", Toast.LENGTH_LONG).show();
-                                            }
-                                        });
+                        if (NotificationUtils.checkNotifySetting(DownloadService.this)) {
+                            for (final RequestInfo request : requesetes) {
+                                final NotificationCompat.Builder notificationBuilder = createNotification(request);
+                                Notification notification = notificationBuilder.build();
+                                startForeground(NOTIFICATION_DOWNLOAD_PROGRESS_ID, notification);
+                                notificationManager.cancelAll();
+                                executeDownload(request, null, new DownloadListener() {
+                                    @Override
+                                    public void onPepare() {
                                     }
-                                }
 
+                                    @Override
+                                    public void onWait() {
+
+                                    }
+
+                                    @Override
+                                    public void onLoading(FileInfo fileInfo) {
+                                        float pro = (float) (fileInfo.getDownloadLocation() * 1.0 / fileInfo.getSize());
+                                        int progress = (int) (pro * 100);
+                                        notificationBuilder.setProgress(100, progress, false);
+                                        notificationBuilder.setContentText("下载进度:" + progress + "%");
+                                        notificationManager.notify(request.hashCode(), notificationBuilder.build());
+                                    }
+
+                                    @Override
+                                    public void onFailed() {
+
+                                    }
+
+                                    @Override
+                                    public void onPaused() {
+                                        notificationBuilder.setContentText("下载暂停");
+                                        notificationManager.notify(request.hashCode(), notificationBuilder.build());
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+                                        notificationBuilder.setProgress(100, 100, false);
+                                        notificationBuilder.setContentText("下载完成");
+                                        notificationManager.notify(request.hashCode(), notificationBuilder.build());
+                                    }
+
+                                    @Override
+                                    public void onCanceled() {
+                                        stopForeground(true);
+                                        notificationManager.cancelAll();
+                                        mNotificationBuilders.remove(request.getDownloadInfo().getUniqueId());
+                                    }
+                                });
+                            }
+                        } else {
+                            mainHandler.post(new Runnable() {
                                 @Override
-                                public void onWait() {
-
-                                }
-
-                                @Override
-                                public void onLoading(FileInfo fileInfo) {
-                                    float pro = (float) (fileInfo.getDownloadLocation() * 1.0 / fileInfo.getSize());
-                                    int progress = (int) (pro * 100);
-                                    notificationBuilder.setProgress(100, progress, false);
-                                    notificationBuilder.setContentText("下载进度:" + progress + "%");
-//                                    notification = notificationBuilder.build();
-                                    notificationManager.notify(1, notificationBuilder.build());
-                                }
-
-                                @Override
-                                public void onFailed() {
-
-                                }
-
-                                @Override
-                                public void onPaused() {
-                                    notificationBuilder.setContentText("下载暂停");
-//                                    notification = notificationBuilder.build();
-                                    notificationManager.notify(1, notificationBuilder.build());
-                                }
-
-                                @Override
-                                public void onComplete() {
-                                    notificationBuilder.setProgress(100, 100, false);
-                                    notificationBuilder.setContentText("下载完成");
-//                                    notification = notificationBuilder.build();
-                                    notificationManager.notify(1, notificationBuilder.build());
-                                }
-
-                                @Override
-                                public void onCanceled() {
-
+                                public void run() {
+                                    Toast.makeText(DownloadService.this, "没有通知权限", Toast.LENGTH_LONG).show();
                                 }
                             });
                         }
@@ -152,26 +155,30 @@ public class DownloadService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
     NotificationManager notificationManager;
-    NotificationCompat.Builder notificationBuilder;
 
     /**
      * Notification
      */
-    public void createNotification(RequestInfo request) {
+    public NotificationCompat.Builder createNotification(RequestInfo request) {
+        NotificationCompat.Builder notificationBuilder;
+        notificationBuilder = mNotificationBuilders.get(request.getDownloadInfo().getUniqueId());
+        if (null != notificationBuilder) {
+            return notificationBuilder;
+        }
         String id = "my_channel_01";
         String name = "我是渠道名字";
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification notification = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel mChannel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
             Log.i(TAG, mChannel.toString());
             notificationManager.createNotificationChannel(mChannel);
-            notification = new Notification.Builder(this)
+            notificationBuilder = new NotificationCompat.Builder(this)
                     .setChannelId(id)
                     .setContentTitle(request.getContentTitle())
                     .setContentText(request.getContentTitle())
-                    .setSmallIcon(R.mipmap.ic_launcher).build();
+                    .setSmallIcon(R.mipmap.ic_launcher);
         } else {
             notificationBuilder = new NotificationCompat.Builder(this)
                     .setContentTitle(request.getContentTitle())
@@ -179,10 +186,8 @@ public class DownloadService extends Service {
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setOngoing(true)
                     .setProgress(100, 0, false);
-            notification = notificationBuilder.build();
         }
-//        notificationManager.notify(111123, notification);
-        startForeground(NOTIFICATION_DOWNLOAD_PROGRESS_ID, notification);
+        return notificationBuilder;
     }
 
     //Todo  除了简单的synchronized, 是否有更好的方式来进行加锁呢
@@ -214,6 +219,8 @@ public class DownloadService extends Service {
                     } else {
                         dbHolder.deleteFileInfo(mDownloadInfo.getUniqueId());
                     }
+                } else if (mFileInfo.getDownloadStatus() == DownloadStatus.CANCLE) {
+                    dbHolder.deleteFileInfo(mDownloadInfo.getUniqueId());
                 }
             }//end of "  null != mFileInfo "
 
@@ -244,8 +251,11 @@ public class DownloadService extends Service {
                     task.setNotifyDownloadListener(notifyDownloadListener);
                 }
                 mExecutor.executeTask(task);
-            } else {
+            } else if (requestInfo.getDictate() == InnerConstant.Request.pause) {
                 task.pause();
+            } else if (requestInfo.getDictate() == InnerConstant.Request.cancle) {
+                task.cancle();
+                mTasks.remove(mDownloadInfo.getUniqueId());
             }
         }
     }

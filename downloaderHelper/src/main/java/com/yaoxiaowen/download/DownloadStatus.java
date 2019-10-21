@@ -18,4 +18,5 @@ public class DownloadStatus {
     public static final int PAUSE = 45;      //暂停Todo
     public static final int COMPLETE = 46;   //完成
     public static final int FAIL = 47;       //失败
+    public static final int CANCLE = 48;       //取消下载
 }

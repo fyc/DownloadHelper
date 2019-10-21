@@ -93,9 +93,9 @@ public class DownloadHelper {
             requests.clear();
             downListeners.clear();
         } else {
-        //绑定
-        Intent bindIntent = new Intent(context, DownloadService.class);
-        context.bindService(bindIntent, connection, context.BIND_AUTO_CREATE);
+            //绑定
+            Intent bindIntent = new Intent(context, DownloadService.class);
+            context.bindService(bindIntent, connection, context.BIND_AUTO_CREATE);
         }
 
     }// end of "submit(..."
@@ -134,9 +134,8 @@ public class DownloadHelper {
         return this;
     }
 
-    public DownloadHelper addTask(String url, File file, CharSequence contentTitle, CharSequence contentText, DownloadListener downloadListener) {
+    public DownloadHelper addTask(String url, File file, CharSequence contentTitle, CharSequence contentText) {
         RequestInfo requestInfo = createRequest(url, file, contentTitle, contentText, InnerConstant.Request.loading);
-        downListeners.put(requestInfo.getDownloadInfo().getUniqueId(), downloadListener);
         LogUtils.i(TAG, "addTask() requestInfo=" + requestInfo);
 
         requests.add(requestInfo);
@@ -157,13 +156,12 @@ public class DownloadHelper {
         return this;
     }
 
-    public DownloadHelper pauseTask(String url, File file, CharSequence contentTitle, CharSequence contentText) {
-        RequestInfo requestInfo = createRequest(url, file, contentTitle, contentText, InnerConstant.Request.pause);
+    public DownloadHelper cancleTask(String url, File file) {
+        RequestInfo requestInfo = createRequest(url, file, InnerConstant.Request.cancle);
         LogUtils.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);
         requests.add(requestInfo);
         return this;
     }
-
 
     private RequestInfo createRequest(String url, File file, int dictate) {
         RequestInfo request = new RequestInfo();

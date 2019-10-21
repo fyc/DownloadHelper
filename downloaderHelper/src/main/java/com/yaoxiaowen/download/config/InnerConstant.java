@@ -25,6 +25,7 @@ public class InnerConstant {
     public static class Request{
         public static final int loading = 10; //下载状态
         public static final int pause = 11; //暂停状态
+        public static final int cancle = 12; //取消状态
     }
 
     public static class Inner{

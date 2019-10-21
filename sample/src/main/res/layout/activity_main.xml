@@ -50,7 +50,7 @@
             android:layout_height="40dp"
             android:layout_marginLeft="10dp"
             android:background="@drawable/shape_btn_blue"
-            android:text="切换至后台下载" />
+            android:text="开启通知下载" />
 
     </LinearLayout>
     <!-- 第2组 -->
@@ -90,14 +90,37 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100" />
-
-    <Button
-        android:id="@+id/thirdBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:background="@drawable/shape_btn_blue"
-        android:text="下载" />
+        android:layout_marginBottom="35dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/thirdBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/shape_btn_blue"
+            android:text="下载" />
+
+        <Button
+            android:id="@+id/thirdCancleBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/shape_btn_blue"
+            android:text="取消" />
+
+        <Button
+            android:id="@+id/thirdChangeForegroundBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/shape_btn_blue"
+            android:text="开启通知下载" />
+
+    </LinearLayout>
 
     <!--删除所有文件按钮-->
 

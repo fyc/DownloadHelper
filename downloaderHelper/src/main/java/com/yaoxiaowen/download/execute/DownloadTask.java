@@ -35,6 +35,7 @@ public class DownloadTask implements Runnable {
     private FileInfo mFileInfo;
     private DbHolder dbHolder;
     private boolean isPause;
+    private boolean isCancle;
     private DownloadListener downloadListener;
     private DownloadListener notifyDownloadListener;
 
@@ -105,6 +106,10 @@ public class DownloadTask implements Runnable {
 
     public void pause() {
         isPause = true;
+    }
+
+    public void cancle() {
+        isCancle = true;
     }
 
     public int getStatus() {
@@ -200,6 +205,24 @@ public class DownloadTask implements Runnable {
                     http.disconnect();
                     accessFile.close();
                     inStream.close();
+                    return;
+                }
+                if(isCancle){
+                    LogUtils.i(TAG, "下载过程 设置了 取消");
+                    mFileInfo.setDownloadStatus(DownloadStatus.CANCLE);
+                    isCancle = false;
+                    dbHolder.saveFile(mFileInfo);
+
+                    downloadListener.onCanceled();
+                    notifyDownloadListener.onCanceled();
+
+                    http.disconnect();
+                    accessFile.close();
+                    inStream.close();
+
+                    if (info.getFile().exists()) {
+                        info.getFile().delete();
+                    }
                     return;
                 }
                 accessFile.write(buffer, 0, offset);

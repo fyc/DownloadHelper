@@ -122,7 +122,7 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
         deleteAllBtn = (Button) findViewById(R.id.deleteAllBtn);
 
         jumpTestActyBtn = (Button) findViewById(R.id.jumpTestActyBtn);
-        jumpMainActyBtn= (Button) findViewById(R.id.jumpMainActyBtn);
+        jumpMainActyBtn = (Button) findViewById(R.id.jumpMainActyBtn);
     }
 
     private void initListener() {
@@ -205,7 +205,7 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
     private void onThirdApkClick() {
         String thirdContent = thirdBtn.getText().toString().trim();
         if (TextUtils.equals(thirdContent, START)) {
-            mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "", new ThirdDownloadListener()).submitForeground(FirstActivity.this);
+            mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "").submitForeground(FirstActivity.this);
             thirdBtn.setText(PAUST);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
