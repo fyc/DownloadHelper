@@ -177,7 +177,6 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
     private void onFirstApkClick() {
         String firstContent = firstBtn.getText().toString().trim();
         if (TextUtils.equals(firstContent, START)) {
-//            mDownloadHelper.addTask(thirdUrl, thirdFile, new ThirdDownloadListener());
             mDownloadHelper.addTask(firstUrl, firstFile, new FirstDownloadListener()).submit(FirstActivity.this);
             firstBtn.setText(PAUST);
             firstBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
@@ -192,7 +191,7 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
     private void onSecondApkClick() {
         String secondContent = secondBtn.getText().toString().trim();
         if (TextUtils.equals(secondContent, START)) {
-            mDownloadHelper.addTask(secondUrl, secondFile, new FirstDownloadListener()).submit(FirstActivity.this);
+            mDownloadHelper.addTask(secondUrl, secondFile, new SecondDownloadListener()).submit(FirstActivity.this);
             secondBtn.setText(PAUST);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
@@ -205,7 +204,7 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
     private void onThirdApkClick() {
         String thirdContent = thirdBtn.getText().toString().trim();
         if (TextUtils.equals(thirdContent, START)) {
-            mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "").submitForeground(FirstActivity.this);
+            mDownloadHelper.addTask(thirdUrl, thirdFile, new ThirdDownloadListener()).submit(FirstActivity.this);
             thirdBtn.setText(PAUST);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
@@ -215,7 +214,6 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    private static final int NOTIFICATION_DOWNLOAD_PROGRESS_ID = 0x0001;
 
     @Override
     protected void onDestroy() {
@@ -335,7 +333,84 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
 
         @Override
         public void onCanceled() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstBtn.setText(START);
+                    firstBtn.setBackgroundResource(R.drawable.shape_btn_blue);
+                    firstTitle.setText("cancle");
+                    firstProgressBar.setProgress(0);
+                }
+            });
+        }
+    }
 
+    class SecondDownloadListener implements DownloadListener {
+
+
+        @Override
+        public void onPepare() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondTitle.setText("准备下载");
+                }
+            });
+        }
+
+        @Override
+        public void onWait() {
+
+        }
+
+        @Override
+        public void onLoading(final FileInfo fileInfo) {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateTextview(secondTitle, secondProgressBar, fileInfo, secondName, secondBtn);
+                }
+            });
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondTitle.setText("pause");
+                    secondTitle.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onComplete() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondBtn.setText("下载完成");
+                    secondBtn.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onCanceled() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondBtn.setText(START);
+                    secondBtn.setBackgroundResource(R.drawable.shape_btn_blue);
+                    secondTitle.setText("cancle");
+                    secondProgressBar.setProgress(0);
+                }
+            });
         }
     }
 
@@ -396,7 +471,15 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
 
         @Override
         public void onCanceled() {
-
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    thirdBtn.setText(START);
+                    thirdBtn.setBackgroundResource(R.drawable.shape_btn_blue);
+                    thirdTitle.setText("cancle");
+                    thirdProgressBar.setProgress(0);
+                }
+            });
         }
     }
 }

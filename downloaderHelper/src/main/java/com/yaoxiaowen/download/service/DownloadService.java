@@ -85,7 +85,7 @@ public class DownloadService extends Service {
                     ArrayList<RequestInfo> requesetes =
                             (ArrayList<RequestInfo>) intent.getSerializableExtra(InnerConstant.Inner.SERVICE_INTENT_EXTRA);
                     if (null != requesetes && requesetes.size() > 0) {
-                        if (NotificationUtils.checkNotifySetting(DownloadService.this)) {
+                        if (NotificationUtils.checkNotifySetting(DownloadService.this)) {//检查通知权限
                             for (final RequestInfo request : requesetes) {
                                 final NotificationCompat.Builder notificationBuilder = createNotification(request);
                                 Notification notification = notificationBuilder.build();

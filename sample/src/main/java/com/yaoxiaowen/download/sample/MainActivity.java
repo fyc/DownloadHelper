@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView secondTitle;
     private ProgressBar secondProgressBar;
-    private Button secondBtn;
+    private Button secondBtn, secondCancleBtn, secondChangeForegroundBtn;
 
     private TextView thirdTitle;
     private ProgressBar thirdProgressBar;
@@ -113,13 +113,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         secondTitle = (TextView) findViewById(R.id.secondTitle);
         secondProgressBar = (ProgressBar) findViewById(R.id.secondProgressBar);
         secondBtn = (Button) findViewById(R.id.secondBtn);
-        thirdCancleBtn = (Button) findViewById(R.id.thirdCancleBtn);
-        thirdChangeForegroundBtn = (Button) findViewById(R.id.thirdChangeForegroundBtn);
+        secondCancleBtn = (Button) findViewById(R.id.secondCancleBtn);
+        secondChangeForegroundBtn = (Button) findViewById(R.id.secondChangeForegroundBtn);
         secondBtn.setText(START);
 
         thirdTitle = (TextView) findViewById(R.id.thirdTitle);
         thirdProgressBar = (ProgressBar) findViewById(R.id.thirdProgressBar);
         thirdBtn = (Button) findViewById(R.id.thirdBtn);
+        thirdCancleBtn = (Button) findViewById(R.id.thirdCancleBtn);
+        thirdChangeForegroundBtn = (Button) findViewById(R.id.thirdChangeForegroundBtn);
         thirdBtn.setText(START);
 
         deleteAllBtn = (Button) findViewById(R.id.deleteAllBtn);
@@ -133,6 +135,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         firstChangeForegroundBtn.setOnClickListener(this);
 
         secondBtn.setOnClickListener(this);
+        secondCancleBtn.setOnClickListener(this);
+        secondChangeForegroundBtn.setOnClickListener(this);
 
         thirdBtn.setOnClickListener(this);
         thirdCancleBtn.setOnClickListener(this);
@@ -156,6 +160,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.secondBtn:
                 onSecondApkClick();
+                break;
+            case R.id.secondCancleBtn:
+                mDownloadHelper.cancleTask(secondUrl, secondFile).submit(MainActivity.this);
+                break;
+            case R.id.secondChangeForegroundBtn:
+                mDownloadHelper.addTask(secondUrl, secondFile, secondName, "").submitForeground(MainActivity.this);
                 break;
             case R.id.thirdBtn:
                 onThirdApkClick();
@@ -206,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void onSecondApkClick() {
         String secondContent = secondBtn.getText().toString().trim();
         if (TextUtils.equals(secondContent, START)) {
-            mDownloadHelper.addTask(secondUrl, secondFile, new FirstDownloadListener()).submit(MainActivity.this);
+            mDownloadHelper.addTask(secondUrl, secondFile, new SecondDownloadListener()).submit(MainActivity.this);
             secondBtn.setText(PAUST);
             secondBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
@@ -355,6 +365,75 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     firstBtn.setBackgroundResource(R.drawable.shape_btn_blue);
                     firstTitle.setText("cancle");
                     firstProgressBar.setProgress(0);
+                }
+            });
+        }
+    }
+
+    class SecondDownloadListener implements DownloadListener {
+
+
+        @Override
+        public void onPepare() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondTitle.setText("准备下载");
+                }
+            });
+        }
+
+        @Override
+        public void onWait() {
+
+        }
+
+        @Override
+        public void onLoading(final FileInfo fileInfo) {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateTextview(secondTitle, secondProgressBar, fileInfo, secondName, secondBtn);
+                }
+            });
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondTitle.setText("pause");
+                    secondTitle.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onComplete() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondBtn.setText("下载完成");
+                    secondBtn.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onCanceled() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    secondBtn.setText(START);
+                    secondBtn.setBackgroundResource(R.drawable.shape_btn_blue);
+                    secondTitle.setText("cancle");
+                    secondProgressBar.setProgress(0);
                 }
             });
         }
