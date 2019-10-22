@@ -1,3 +1,9 @@
+## 前言
+该项目由[https://github.com/yaowen369/DownloadHelper](https://github.com/yaowen369/DownloadHelper) fork而来，并在最大程度保有原项目代码及用法的基础上做了一些调整、修改，修改内容如下：
++ 取消广播，改用接口回调进行下载监听
++ 增加取消下载功能
++ 增加通知栏显示下载进度条
+
 ## 功能特性
 
 + 断点续传
@@ -6,16 +12,12 @@
 ## 使用本项目的理由
 
 - **可靠稳定** *(我们拥有近百万用户的某个app项目，迭代了近二十个版本，该下载模块久经考验,工作正常)*
+*(修改者os：由于该模块被本人进行了修改，未经过市场的真正考验，所以其稳定性可能不能与原项目相提并论)*
 - **体积很小** *(总计只有数十个java文件)*
 - **无其他依赖** *(仅使用sdk本身的api，没有依赖任何第三方库)*
 - **接入方式简单**
 
 ![download_demo](https://github.com/yaowen369/DownloadHelper/blob/master/docs/img/download_three.gif)
-
-## 导入项目
-```
-implementation 'com.yaoxiaowen:download:1.4.1'
-```
 
 ## 使用方式
 #### 1, **注册**
@@ -27,30 +29,35 @@ implementation 'com.yaoxiaowen:download:1.4.1'
 
 ```
 
-#### 2,  **开始/暂停/重启 下载任务。**
+#### 2,  **开始/暂停/取消/重启 下载任务。**
 
-+ 开始
++ 开始,可传入监听回调，或者null
 
 ```java
 //先获得这个单例对象
         mDownloadHelper = DownloadHelper.getInstance();
 
 //执行两个下载任务
-        mDownloadHelper.addTask(firstUrl, firstFile, FIRST_BC_ACTION)
-                .addTask(secondUrl, secondFile, SECOND_BC_ACTION)
+        mDownloadHelper.addTask(firstUrl, firstFile,new FirstDownloadListener())
+                .addTask(secondUrl, secondFile,new SecondDownloadListener())
                 .submit(this);
 
 //当然，下面这样分开写，自然也可以
-       mDownloadHelper.addTask(firstUrl, firstFile, FIRST_BC_ACTION)
+       mDownloadHelper.addTask(firstUrl, firstFile,new FirstDownloadListener())
                 .submit(this);
 
-        mDownloadHelper.addTask(secondUrl, secondFile, SECOND_BC_ACTION)
+        mDownloadHelper.addTask(secondUrl, secondFile, new SecondDownloadListener())
                 .submit(this);
 ```
 
-+ 暂停
++ 暂停,不需要传入监听回调
 ```java
-        mDownloadHelper.pauseTask(firstUrl, firstFile, FIRST_BC_ACTION)
+        mDownloadHelper.pauseTask(firstUrl, firstFile)
+                .submit(this);
+```
++ 取消,不需要传入监听回调
+```java
+        mDownloadHelper.cancleTask(firstUrl, firstFile)
                 .submit(this);
 ```
 
@@ -58,54 +65,96 @@ implementation 'com.yaoxiaowen:download:1.4.1'
 
 当下载任务被暂停/结束后，想要重新启动时，和开始下载操作相同，直接 `addTask().submit`即可从上一次下载断点处开始下载。
 
++ 开启通知栏显示下载，用法很简单
+注意：1，addTask的时候，参数有四个，第一个为下载的链接，第二个为存放文件，第三个则为通知显示栏的title，第四个则为通知显示栏的content，均为字符串类型；
+2，提交任务使用submitNotify而不是submit，这两个提交方式决定两种不同的启动服务的方式，submit为绑定服务，submitNotify为启动服务，不与页面绑定。
+3，不论是submit或是submitNotify哪种提交任务，需要暂停/取消任务的时候，如上文所示，正常的使用即可
+
+```
+//执行两个下载任务
+        mDownloadHelper.addTask(firstUrl, firstFile, firstName, "")
+                .addTask(secondUrl, secondFile,secondName, "")
+                .submitNotify(this);
+```
+
+当下载任务被暂停/结束后，想要重新启动时，和开始下载操作相同，直接 `addTask().submit`即可从上一次下载断点处开始下载。
+
 
 > 当我们执行多个下载任务时，内部会维护任务列表。线程池维护多个线程，执行下载任务。 单个任务只采用单一线程执行任务。
 
-
-
-#### 3, **广播接收信息**
-我们通过广播来进行通讯。广播携带下载文件的相关信息。
-
-以下情况会发送广播。
-> + 当下载任务的状态发生改变时。(比如开始，准备，失败,暂停等状态改变).
-> + 在 **LOADING(下载中)** 状态时，默认每间隔1s就发送广播。
-
-###### 注册广播
-```java
-       //广播不要忘记注册和反注册。
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(FIRST_BC_ACTION);
-        registerReceiver(receiver, filter);
+#### 3，上文所提及的监听回调，示例如下：
 ```
-###### 接收信息
+class FirstDownloadListener implements DownloadListener {
 
-```java
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+
         @Override
-        public void onReceive(Context context, Intent intent) {
-            if (null != intent) {
-                switch (intent.getAction()) {
-                    case FIRST_BC_ACTION:{
-                        /**
-                         * 我们接收到的FileInfo对象，包含了下载文件的各种信息。
-                         * 然后我们就可以做我们想做的事情了。
-                         * 比如更新进度条，改变状态等。
-                         */
-                        com.yaoxiaowen.download.FileInfo fileInfo =
-                                (FileInfo) intent.getSerializableExtra(
-                                        com.yaoxiaowen.download.DownloadConstant.DOWNLOAD_EXTRA);
-
-                    }
-                    break;
-                    default:
+        public void onPepare() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstTitle.setText("准备下载");
                 }
-            }
-        }//end of "onReceive(..."
-    };
+            });
+        }
 
+        @Override
+        public void onWait() {
+
+        }
+
+        @Override
+        public void onLoading(final FileInfo fileInfo) {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateTextview(firstTitle, firstProgressBar, fileInfo, firstName, firstBtn);
+                }
+            });
+        }
+
+        @Override
+        public void onFailed() {
+
+        }
+
+        @Override
+        public void onPaused() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstTitle.setText("pause");
+                    firstTitle.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onComplete() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstBtn.setText("下载完成");
+                    firstBtn.setBackgroundColor(0xff5c0d);
+                }
+            });
+        }
+
+        @Override
+        public void onCanceled() {
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    firstBtn.setText(START);
+                    firstBtn.setBackgroundResource(R.drawable.shape_btn_blue);
+                    firstTitle.setText("cancle");
+                    firstProgressBar.setProgress(0);
+                }
+            });
+        }
+    }
 ```
 
-> 使用方式很简单，这里有两个demo。[执行三个下载任务](https://github.com/yaowen369/DownloadHelper/blob/master/sample/src/main/java/com/yaoxiaowen/download/sample/MainActivity.java)  或 [执行一个下载任务](https://github.com/yaowen369/DownloadHelper/blob/master/sample/src/main/java/com/yaoxiaowen/download/sample/SimpleMainActivity.java)
+> 使用方式很简单，这里有两个demo。[执行三个下载任务](https://github.com/yaowen369/DownloadHelper/blob/master/sample/src/main/java/com/yaoxiaowen/download/sample/MainActivity.java)
 
 ## API和相关常量
 #### **1. DownloadHelper.java**
@@ -121,25 +170,49 @@ public class DownloadHelper {
      */
     public synchronized void submit(Context context);
 
-    /**
-     *  添加 新的下载任务
+/**
+     * 提交  下载  等任务.(提交就意味着开始执行生效)
+     * 通知栏会提示
      *
-     * @param url  下载的url
-     * @param file  存储在某个位置上的文件
-     * @param action  下载过程会发出广播信息.该参数是广播的action
-     * @return   DownloadHelper自身 (方便链式调用)
+     * @param context
      */
-    public DownloadHelper addTask(String url, File file, @Nullable String action);
-
-    /**
-     *  暂停某个下载任务
+    public synchronized void submitNotify(Context context);
+   /**
+     * 添加 新的下载任务
      *
-     * @param url   下载的url
-     * @param file  存储在某个位置上的文件
-     * @param action  下载过程会发出广播信息.该参数是广播的action
+     * @param url              下载的url
+     * @param file             存储在某个位置上的文件
+     * @param downloadListener 下载过程的监听接口
      * @return DownloadHelper自身 (方便链式调用)
      */
-    public DownloadHelper pauseTask(String url, File file, @Nullable String action);
+    public DownloadHelper addTask(String url, File file, DownloadListener downloadListener);
+/**
+     * 添加 新的下载任务，主要配合submitNotify进行使用
+     *
+     * @param url              下载的url
+     * @param file             存储在某个位置上的文件
+     * @param contentTitle     通知栏显示的title
+     * @param contentText      通知栏显示的content
+     * @return DownloadHelper  自身 (方便链式调用)
+     */
+    public DownloadHelper addTask(String url, File file, CharSequence contentTitle, CharSequence contentText) ;
+   /**
+     * 暂停某个下载任务
+     *
+     * @param url  下载的url
+     * @param file 存储在某个位置上的文件
+     * @return DownloadHelper自身 (方便链式调用)
+     */
+    public DownloadHelper pauseTask(String url, File file);
+
+/**
+     * 取消某个下载任务，会将之前所下载的进行删除
+     *
+     * @param url  下载的url
+     * @param file 存储在某个位置上的文件
+     * @return DownloadHelper 自身 (方便链式调用)
+     */
+    public DownloadHelper cancleTask(String url, File file);
 }
 
 ```
@@ -192,6 +265,7 @@ public class DownloadStatus {
     public static final int PAUSE = 45;      //暂停
     public static final int COMPLETE = 46;   //完成
     public static final int FAIL = 47;       //失败
+    public static final int CANCLE = 48;       //取消下载
 }
 ```
 
@@ -199,6 +273,7 @@ public class DownloadStatus {
 + 对于单一任务的多线程执行。
 + 能够监听网络状态，自动暂停和恢复。
 + 多线程的加锁方式的优化，提高效率。
++ 对外的API仍需优化才行。
 
 ## 技术原理简介
    所谓断点下载，其实也不复杂。注意以下几点内容。
@@ -212,3 +287,6 @@ public class DownloadStatus {
 
 ## other
 + *使用过程中有什么问题，可以提交issues或联系本人，尽力予以解决。*
+
+## 后言
+该READ.md在原READ.md上根据现代码进行的部分修改
