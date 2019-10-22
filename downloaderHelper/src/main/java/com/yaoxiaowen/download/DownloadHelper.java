@@ -101,11 +101,12 @@ public class DownloadHelper {
     }// end of "submit(..."
 
     /**
-     * 提交  下载/暂停  等任务.(提交就意味着开始执行生效)
+     * 提交  下载  等任务.(提交就意味着开始执行生效)
+     * 通知栏会提示
      *
      * @param context
      */
-    public synchronized void submitForeground(Context context) {
+    public synchronized void submitNotify(Context context) {
         if (requests.isEmpty()) {
             LogUtils.w("没有下载任务可供执行");
             return;
@@ -134,6 +135,15 @@ public class DownloadHelper {
         return this;
     }
 
+    /**
+     * 添加 新的下载任务，主要配合submitNotify进行使用
+     *
+     * @param url              下载的url
+     * @param file             存储在某个位置上的文件
+     * @param contentTitle     通知栏显示的title
+     * @param contentText      通知栏显示的content
+     * @return DownloadHelper  自身 (方便链式调用)
+     */
     public DownloadHelper addTask(String url, File file, CharSequence contentTitle, CharSequence contentText) {
         RequestInfo requestInfo = createRequest(url, file, contentTitle, contentText, InnerConstant.Request.loading);
         LogUtils.i(TAG, "addTask() requestInfo=" + requestInfo);
@@ -156,6 +166,13 @@ public class DownloadHelper {
         return this;
     }
 
+    /**
+     * 取消某个下载任务，会将之前所下载的进行删除
+     *
+     * @param url  下载的url
+     * @param file 存储在某个位置上的文件
+     * @return DownloadHelper 自身 (方便链式调用)
+     */
     public DownloadHelper cancleTask(String url, File file) {
         RequestInfo requestInfo = createRequest(url, file, InnerConstant.Request.cancle);
         LogUtils.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);

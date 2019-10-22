@@ -90,7 +90,7 @@ public class DownloadService extends Service {
                                 final NotificationCompat.Builder notificationBuilder = createNotification(request);
                                 Notification notification = notificationBuilder.build();
                                 startForeground(NOTIFICATION_DOWNLOAD_PROGRESS_ID, notification);
-                                notificationManager.cancelAll();
+                                notificationManager.cancel(request.hashCode());
                                 executeDownload(request, null, new DownloadListener() {
                                     @Override
                                     public void onPepare() {
@@ -131,7 +131,7 @@ public class DownloadService extends Service {
                                     @Override
                                     public void onCanceled() {
                                         stopForeground(true);
-                                        notificationManager.cancelAll();
+                                        notificationManager.cancel(request.hashCode());
                                         mNotificationBuilders.remove(request.getDownloadInfo().getUniqueId());
                                     }
                                 });
@@ -167,8 +167,8 @@ public class DownloadService extends Service {
         if (null != notificationBuilder) {
             return notificationBuilder;
         }
-        String id = "my_channel_01";
-        String name = "我是渠道名字";
+        String id = (String) request.getContentTitle() + "-channelId";
+        String name = (String) request.getContentTitle() + "-channelName";
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel mChannel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW);
@@ -178,7 +178,9 @@ public class DownloadService extends Service {
                     .setChannelId(id)
                     .setContentTitle(request.getContentTitle())
                     .setContentText(request.getContentTitle())
-                    .setSmallIcon(R.mipmap.ic_launcher);
+                    .setSmallIcon(R.mipmap.ic_launcher)
+//                    .setOngoing(true)
+                    .setProgress(100, 0, false);
         } else {
             notificationBuilder = new NotificationCompat.Builder(this)
                     .setContentTitle(request.getContentTitle())

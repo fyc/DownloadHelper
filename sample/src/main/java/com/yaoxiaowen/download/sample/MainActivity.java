@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mDownloadHelper.cancleTask(firstUrl, firstFile).submit(MainActivity.this);
                 break;
             case R.id.firstChangeForegroundBtn:
-                mDownloadHelper.addTask(firstUrl, firstFile, firstName, "").submitForeground(MainActivity.this);
+                mDownloadHelper.addTask(firstUrl, firstFile, firstName, "").submitNotify(MainActivity.this);
                 break;
             case R.id.secondBtn:
                 onSecondApkClick();
@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mDownloadHelper.cancleTask(secondUrl, secondFile).submit(MainActivity.this);
                 break;
             case R.id.secondChangeForegroundBtn:
-                mDownloadHelper.addTask(secondUrl, secondFile, secondName, "").submitForeground(MainActivity.this);
+                mDownloadHelper.addTask(secondUrl, secondFile, secondName, "").submitNotify(MainActivity.this);
                 break;
             case R.id.thirdBtn:
                 onThirdApkClick();
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mDownloadHelper.cancleTask(thirdUrl, thirdFile).submit(MainActivity.this);
                 break;
             case R.id.thirdChangeForegroundBtn:
-                mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "").submitForeground(MainActivity.this);
+                mDownloadHelper.addTask(thirdUrl, thirdFile, thirdName, "").submitNotify(MainActivity.this);
                 break;
             case R.id.deleteAllBtn:
                 deleteAllFile();

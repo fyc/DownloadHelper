@@ -208,7 +208,7 @@ public class FirstActivity extends AppCompatActivity implements View.OnClickList
             thirdBtn.setText(PAUST);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_orangle);
         } else {
-            mDownloadHelper.pauseTask(thirdUrl, thirdFile).submitForeground(FirstActivity.this);
+            mDownloadHelper.pauseTask(thirdUrl, thirdFile).submitNotify(FirstActivity.this);
             thirdBtn.setText(START);
             thirdBtn.setBackgroundResource(R.drawable.shape_btn_blue);
         }
